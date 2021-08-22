@@ -1,7 +1,9 @@
 ## Ideally, they have one file with the settings for the strat and deployment
 ## This file would allow them to configure so they can test, deploy and interact with the strategy
 
-BADGER_DEV_MULTISIG = "0xc388750A661cC0B99784bAB2c55e1F38ff91643b" # TODO: Maybe needs to be changed
+BADGER_DEV_MULTISIG = (
+    "0xc388750A661cC0B99784bAB2c55e1F38ff91643b"  # TODO: Maybe needs to be changed
+)
 
 WANT = "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6"  ## wBTC
 LP_COMPONENT = "0x5c2ed810328349100a66b82b78a1791b101c9d61"  ## amWBTC

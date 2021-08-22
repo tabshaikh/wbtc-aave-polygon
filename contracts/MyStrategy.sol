@@ -11,6 +11,8 @@ import "../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgrade
 
 import "../interfaces/badger/IController.sol";
 import "../interfaces/aave/ILendingPool.sol";
+import "../interfaces/aave/IAaveIncentivesController.sol";
+import "../interfaces/uniswap/IUniswapRouterV2.sol";
 
 import {BaseStrategy} from "../deps/BaseStrategy.sol";
 
@@ -26,8 +28,16 @@ contract MyStrategy is BaseStrategy {
     address public constant LENDING_POOL = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
     // // Change to this to deploy on Mumbai Testnet
     // address public constant LENDING_POOL = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
+    // address public constant INCENTIVES_CONTROLLER = 0xd41aE58e803Edf4304334acCE4DC4Ec34a63C644;
 
-    
+    address public constant INCENTIVES_CONTROLLER = 0x357D51124f59836DeD84c8a1730D72B749d8BC23;
+    // // Change to this to deploy on Mumbai Testnet
+    // address public constant INCENTIVES_CONTROLLER = 0xd41aE58e803Edf4304334acCE4DC4Ec34a63C644;
+
+    address public constant QUICKSWAP_ROUTER = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
+
+    address public constant wETH_TOKEN = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
+    address public constant wBTC_TOKEN = 0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6;
 
     // Used to signal to the Badger Tree that rewards where sent to it
     event TreeDistribution(
@@ -65,6 +75,9 @@ contract MyStrategy is BaseStrategy {
 
         /// @dev do one off approvals here
         IERC20Upgradeable(want).safeApprove(LENDING_POOL, type(uint256).max);
+
+        IERC20Upgradeable(reward).safeApprove(QUICKSWAP_ROUTER, type(uint256).max);
+        IERC20Upgradeable(wETH_TOKEN).safeApprove(QUICKSWAP_ROUTER, type(uint256).max);
     }
 
     /// ===== View Functions =====
@@ -155,6 +168,26 @@ contract MyStrategy is BaseStrategy {
 
         // Write your code here
 
+        address[] memory assets = new address[](1);
+        assets[0] = aToken;
+
+        IAaveIncentivesController(INCENTIVES_CONTROLLER).claimRewards(assets, type(uint256).max, address(this));
+
+        uint256 rewardsAmount = IERC20Upgradeable(reward).balanceOf(address(this));
+
+        if(rewardsAmount == 0) {
+            return 0;
+        }
+
+        if (rewardsAmount > 0) {
+
+        address[] memory path = new address[](3);
+        path[0] = reward;
+        path[1] = wETH_TOKEN;
+        path[2] = wBTC_TOKEN;
+        IUniswapRouterV2(QUICKSWAP_ROUTER).swapExactTokensForTokens(rewardsAmount, 0, path, address(this), now);
+        
+        }
         uint256 earned =
             IERC20Upgradeable(want).balanceOf(address(this)).sub(_before);
 
