@@ -1,11 +1,11 @@
 ## Ideally, they have one file with the settings for the strat and deployment
 ## This file would allow them to configure so they can test, deploy and interact with the strategy
 
-BADGER_DEV_MULTISIG = "0xb65cef03b9b89f99517643226d76e286ee999e77"
+BADGER_DEV_MULTISIG = "0xc388750A661cC0B99784bAB2c55e1F38ff91643b" # TODO: Maybe needs to be changed
 
-WANT = "0x6b175474e89094c44da98b954eedeac495271d0f"  ## Dai
-LP_COMPONENT = "0x028171bca77440897b824ca71d1c56cac55b68a3"  ## aDAI
-REWARD_TOKEN = "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9"  ## AAVE Token
+WANT = "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6"  ## wBTC
+LP_COMPONENT = "0x5c2ed810328349100a66b82b78a1791b101c9d61"  ## amWBTC
+REWARD_TOKEN = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270"  ## wMATIC
 
 PROTECTED_TOKENS = [WANT, LP_COMPONENT, REWARD_TOKEN]
 ## Fees in Basis Points
