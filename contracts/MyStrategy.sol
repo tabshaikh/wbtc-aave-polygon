@@ -10,6 +10,7 @@ import "../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
 import "../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
 import "../interfaces/badger/IController.sol";
+import "../interfaces/aave/ILendingPool.sol";
 
 import {BaseStrategy} from "../deps/BaseStrategy.sol";
 
@@ -19,8 +20,14 @@ contract MyStrategy is BaseStrategy {
     using SafeMathUpgradeable for uint256;
 
     // address public want // Inherited from BaseStrategy, the token the strategy wants, swaps into and tries to grow
-    address public lpComponent; // Token we provide liquidity with
-    address public reward; // Token we farm and swap to want / lpComponent
+    address public aToken; // Token we provide liquidity with
+    address public reward; // Token we farm and swap to want / aToken
+
+    address public constant LENDING_POOL = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
+    // // Change to this to deploy on Mumbai Testnet
+    // address public constant LENDING_POOL = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
+
+    
 
     // Used to signal to the Badger Tree that rewards where sent to it
     event TreeDistribution(
@@ -49,7 +56,7 @@ contract MyStrategy is BaseStrategy {
 
         /// @dev Add config here
         want = _wantConfig[0];
-        lpComponent = _wantConfig[1];
+        aToken = _wantConfig[1];
         reward = _wantConfig[2];
 
         performanceFeeGovernance = _feeConfig[0];
@@ -57,14 +64,14 @@ contract MyStrategy is BaseStrategy {
         withdrawalFee = _feeConfig[2];
 
         /// @dev do one off approvals here
-        // IERC20Upgradeable(want).safeApprove(gauge, type(uint256).max);
+        IERC20Upgradeable(want).safeApprove(LENDING_POOL, type(uint256).max);
     }
 
     /// ===== View Functions =====
 
     // @dev Specify the name of the strategy
     function getName() external pure override returns (string memory) {
-        return "StrategyName";
+        return "wBTC AAVE Strategy on Polygon";
     }
 
     // @dev Specify the version of the Strategy, for upgrades
@@ -74,12 +81,12 @@ contract MyStrategy is BaseStrategy {
 
     /// @dev Balance of want currently held in strategy positions
     function balanceOfPool() public view override returns (uint256) {
-        return 0;
+        return IERC20Upgradeable(aToken).balanceOf(address(this));
     }
 
     /// @dev Returns true if this strategy requires tending
     function isTendable() public view override returns (bool) {
-        return true;
+        return balanceOfWant() > 0;
     }
 
     // @dev These are the tokens that cannot be moved except by the vault
@@ -91,7 +98,7 @@ contract MyStrategy is BaseStrategy {
     {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
-        protectedTokens[1] = lpComponent;
+        protectedTokens[1] = aToken;
         protectedTokens[2] = reward;
         return protectedTokens;
     }
@@ -119,18 +126,25 @@ contract MyStrategy is BaseStrategy {
     /// @dev invest the amount of want
     /// @notice When this function is called, the controller has already sent want to this
     /// @notice Just get the current balance and then invest accordingly
-    function _deposit(uint256 _amount) internal override {}
+    function _deposit(uint256 _amount) internal override {
+        ILendingPool(LENDING_POOL).deposit(want, _amount, address(this), 0);
+    }
 
     /// @dev utility function to withdraw everything for migration
-    function _withdrawAll() internal override {}
+    function _withdrawAll() internal override {
+        ILendingPool(LENDING_POOL).withdraw(want, balanceOfPool(), address(this));
+    }
 
-    /// @dev withdraw the specified amount of want, liquidate from lpComponent to want, paying off any necessary debt for the conversion
+    /// @dev withdraw the specified amount of want, liquidate from aToken to want, paying off any necessary debt for the conversion
     function _withdrawSome(uint256 _amount)
         internal
         override
         returns (uint256)
     {
-        return _amount;
+        if(_amount > balanceOfPool()) {
+            _amount = balanceOfPool();
+        }
+        ILendingPool(LENDING_POOL).withdraw(want, _amount, address(this));
     }
 
     /// @dev Harvest from strategy mechanics, realizing increase in underlying position
@@ -182,6 +196,9 @@ contract MyStrategy is BaseStrategy {
     /// @dev Rebalance, Compound or Pay off debt here
     function tend() external whenNotPaused {
         _onlyAuthorizedActors();
+        if (balanceOfWant() > 0){
+            _deposit(balanceOfWant());
+        }
     }
 
     /// ===== Internal Helper Functions =====
