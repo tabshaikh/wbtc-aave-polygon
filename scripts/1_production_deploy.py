@@ -33,6 +33,7 @@ def main():
 
     # Get deployer account from local keystore
     dev = connect_account()
+    proxy_dev = connect_account()
 
     # Get actors from registry
     registry = BadgerRegistry.at(REGISTRY)
@@ -40,7 +41,7 @@ def main():
     strategist = registry.get("governance")
     guardian = registry.get("guardian")
     keeper = registry.get("keeper")
-    proxyAdmin = registry.get("proxyAdmin")
+    proxyAdmin = proxy_dev.address
 
     assert strategist != AddressZero
     assert guardian != AddressZero
