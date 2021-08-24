@@ -28,7 +28,6 @@ contract MyStrategy is BaseStrategy {
     address public constant LENDING_POOL = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
     // // Change to this to deploy on Mumbai Testnet
     // address public constant LENDING_POOL = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
-    // address public constant INCENTIVES_CONTROLLER = 0xd41aE58e803Edf4304334acCE4DC4Ec34a63C644;
 
     address public constant INCENTIVES_CONTROLLER = 0x357D51124f59836DeD84c8a1730D72B749d8BC23;
     // // Change to this to deploy on Mumbai Testnet
