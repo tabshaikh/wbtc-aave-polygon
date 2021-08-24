@@ -13,70 +13,6 @@ from dotmap import DotMap
 def main():
     return deploy()
 
-
-def testnet_deploy():
-
-    deployer = accounts.load("dev2")
-    strategist = deployer
-    keeper = deployer
-    guardian = deployer
-    governance = accounts.at(BADGER_DEV_MULTISIG, force=True)
-
-    controller = Controller.deploy({"from": deployer})
-    controller.initialize(
-        BADGER_DEV_MULTISIG, strategist, keeper, BADGER_DEV_MULTISIG, {"from": deployer}
-    )
-
-    sett = SettV3.deploy({"from": deployer})
-    sett.initialize(
-        WANT,
-        controller,
-        BADGER_DEV_MULTISIG,
-        keeper,
-        guardian,
-        False,
-        "prefix",
-        "PREFIX",  # {"from": deployer, 'gas_limit': 10000000, "allow_revert":True}
-    )
-
-    sett.unpause({"from": governance})
-    controller.setVault(WANT, sett, {"from": deployer})
-
-    ## Start up Strategy
-    strategy = MyStrategy.deploy({"from": deployer})
-    strategy.initialize(
-        BADGER_DEV_MULTISIG,
-        strategist,
-        controller,
-        keeper,
-        guardian,
-        PROTECTED_TOKENS,
-        FEES,
-    )
-
-    ## Tool that verifies bytecode (run independetly) <- Webapp for anyone to verify
-
-    ## Set up tokens
-    want = interface.IERC20(WANT)
-    lpComponent = interface.IERC20(LP_COMPONENT)
-    rewardToken = interface.IERC20(REWARD_TOKEN)
-
-    ## Wire up Controller to Strart
-    ## In testing will pass, but on live it will fail
-    controller.approveStrategy(WANT, strategy, {"from": governance})
-    controller.setStrategy(WANT, strategy, {"from": deployer})
-
-    ## Uniswap some tokens here
-    router = Contract.from_explorer("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D")
-    router.swapExactETHForTokens(
-        0,  ## Mint out
-        ["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", WANT],
-        deployer,
-        9999999999999999,
-        {"from": deployer, "value": 500000000000000000},
-    )
-
-
 def deploy():
     """
     Deploys, vault, controller and strats and wires them up for you to test
@@ -157,7 +93,7 @@ def deploy():
         ],
         deployer,
         9999999999999999,
-        {"from": deployer, "value": 5 * 10 ** 18},
+        {"from": deployer, "value": 5000 * 10 ** 18},
     )
 
     return DotMap(

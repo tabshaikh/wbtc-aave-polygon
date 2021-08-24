@@ -11,6 +11,7 @@ development:
     evm_version: istanbul
     mnemonic: brownie
     fork: polygon-main
+    default_balance: 100000 ether
 
 live:
 - name: Polygon
